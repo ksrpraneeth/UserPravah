@@ -4,7 +4,7 @@
 
 Join our Discord server for healthy discussions, to ask questions, share ideas, or to collaborate on UserPravah!
 
-[![Discord](https://img.shields.io/discord/1303749220842340412?color=7289DA&label=Discord&logo=discord&logoColor=white)](https://discord.gg/HXqWcdjv)
+[💬 Join the UserPravah Discord Community](https://discord.gg/HXqWcdjv)
 
 ## Overview
 
