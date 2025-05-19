@@ -36,21 +36,32 @@ Before you can use this tool, you need to have the following installed:
 
 ## Installation
 
-1.  **Clone the repository (or copy the `graphgeneratorts` directory):**
-    ```bash
-    # If you have the full project
-    git clone https://github.com/[your_username]/userpravah.git # Replace with actual URL once created
-    cd userpravah/graphgeneratorts 
-    # Or if you just have the directory, navigate into it
-    # cd graphgeneratorts 
-    ```
-    *(Note: The script currently resides in a subdirectory named `graphgeneratorts`. This might be streamlined in the future.)*
+To install UserPravah globally, run the following command:
+```bash
+npm install -g userpravah
+```
 
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-    This will install necessary packages like `ts-morph`, `node-html-parser`, `ts-graphviz`, etc.
+
+### How to run the CLI
+Once installed, you can run UserPravah from your terminal:
+```bash
+userpravah <path_to_your_project_root>
+```
+
+### Example usage
+For instance, if your project is in a directory named `my-angular-app`:
+```bash
+userpravah my-angular-app
+```
+Or, using an absolute path:
+```bash
+userpravah /Users/me/projects/my-cool-app
+```
+
+### Output explanation
+Upon completion, UserPravah will generate the following files in your current directory (or a specified output directory in future versions):
+*   `user-flows.dot`: The graph definition file in DOT language.
+*   `user-flows.png`: The visual graph image.
 
 ## Usage
 
@@ -129,8 +140,26 @@ UserPravah is an evolving project, and contributions are highly welcome!
 
 **How to Contribute:**
 
-1.  Open an issue to discuss the change, new feature, or report a bug.
-2.  Fork the repository and submit a pull request with your changes.
+If you'd like to contribute to the development of UserPravah, here's how you can set up the project locally:
+
+1.  **Clone the repository (or copy the `graphgeneratorts` directory):**
+    ```bash
+    # If you have the full project
+    git clone https://github.com/[your_username]/userpravah.git # Replace with actual URL once created
+    cd userpravah/graphgeneratorts 
+    # Or if you just have the directory, navigate into it
+    # cd graphgeneratorts 
+    ```
+    *(Note: The script currently resides in a subdirectory named `graphgeneratorts`. This might be streamlined in the future.)*
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+    This will install necessary packages like `ts-morph`, `node-html-parser`, `ts-graphviz`, etc.
+
+3.  Open an issue to discuss the change, new feature, or report a bug.
+4.  Fork the repository and submit a pull request with your changes.
 
 ## Testing
 

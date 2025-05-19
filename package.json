@@ -1,6 +1,6 @@
 {
   "name": "userpravah",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "UserPravah is a versatile command-line tool for analyzing web applications and generating visual diagrams of user navigation paths and page-to-page flows. It helps developers understand complex application architectures, document user journeys, and identify potential navigation issues. Initially supporting Angular, UserPravah aims to expand its capabilities to other popular web frameworks.",
   "type": "module",
   "main": "dist/src/angular-flow-analyzer.js",

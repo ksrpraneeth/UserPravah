@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { Project, SourceFile, SyntaxKind, Node, CallExpression, ArrayLiteralExpression, StringLiteral, ObjectLiteralExpression, PropertyAssignment, Identifier, ArrowFunction, ImportSpecifier } from 'ts-morph';
 import { parse as parseHTML } from 'node-html-parser';
 import { digraph, toDot, Subgraph, attribute } from 'ts-graphviz'; // Removed Style import
