@@ -1,10 +1,10 @@
-# UserPravah: Web Application Visualizer
+# User Pravah - User Flow Visualizer
 
 ## Community & Discussion
 
 Join our Discord server for healthy discussions, to ask questions, share ideas, or to collaborate on UserPravah!
 
-[💬 Join the UserPravah Discord Community](https://discord.gg/HXqWcdjv)
+[![Join our Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/HXqWcdjv)
 
 ## Overview
 
