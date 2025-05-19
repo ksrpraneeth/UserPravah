@@ -10,4 +10,4 @@ node_modules/
 *.out
 *.png
 *.dot
-/dist
+dist/
