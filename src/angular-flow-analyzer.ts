@@ -867,18 +867,7 @@ class AngularFlowAnalyzer {
                 const expr = call.getExpression();
                 const exprText = expr.getText();
 
-                // ---- START MODIFIED LOGGING ----
-                if (sourceFile.getFilePath().includes('business-create.component.ts')) {
-                    console.log(`[DEBUG BusinessCreate NavScan] File: ${sourceFile.getFilePath()}, Line: ${call.getStartLineNumber()}, Candidate Call Expression Text: '${exprText}'`);
-                }
-                // ---- END MODIFIED LOGGING ----
-
                 const isRouterCall = exprText.match(/router\.(navigate|navigateByUrl)/);
-                // ---- START MODIFIED LOGGING ----
-                if (isRouterCall && sourceFile.getFilePath().includes('business-create.component.ts')) {
-                    console.log(`[DEBUG BusinessCreate NavScan] MATCHED router call: ${exprText} in ${sourceFile.getFilePath()} at line ${call.getStartLineNumber()}`);
-                }
-                // ---- END MODIFIED LOGGING ----
                 if (isRouterCall) {
                      console.log(`    [NavScan-TS] Found router call: ${exprText} in ${sourceFile.getFilePath()} at line ${call.getStartLineNumber()}`);
                 }
@@ -1091,10 +1080,6 @@ class AngularFlowAnalyzer {
         g.attributes.edge.set(attribute.fontsize, 9);
         
         console.log('Starting generic graph generation...');
-        // ---- START DEBUG LOGGING ----
-        console.log(`[DEBUG generateGraph - InitialCheck] Total this.routes: ${this.routes.length}`);
-        console.log(`[DEBUG generateGraph - InitialCheck] Total this.flows: ${this.flows.length}`);
-        // ---- END DEBUG LOGGING ----
 
         console.log(`Total routes found: ${this.routes.length}`);
         console.log(`Total navigation flows found: ${this.flows.length}`);
@@ -1123,15 +1108,6 @@ class AngularFlowAnalyzer {
         const flowEdges: FlowEdge[] = [];
         // Set to track existing edges to avoid duplicates
         const existingEdges = new Set<string>();
-        
-        // ---- START DEBUG LOGGING for this.routes ----
-        console.log(`[DEBUG generateGraph - Routes PreCheck] Dumping relevant this.routes entries:`);
-        this.routes.forEach(r => {
-            if (r.fullPath.includes('business/create') || r.fullPath.includes('business/:id/connect') || r.fullPath.includes('posts/create')) {
-                console.log(`[DEBUG generateGraph - Routes PreCheck] Route: fullPath='${r.fullPath}', component='${r.component}', path='${r.path}'`);
-            }
-        });
-        // ---- END DEBUG LOGGING for this.routes ----
         
         // Helper function to clean route paths for DOT compatibility
         const cleanRoutePath = (path: string): string => {
@@ -1268,22 +1244,10 @@ class AngularFlowAnalyzer {
         const componentToRoute = new Map<string, string>();
         for (const [routePath, node] of routeNodes.entries()) {
             if (node.component) {
-                // ---- START DEBUG LOGGING for componentToRoute population ----
-                if (node.originalPath.includes('business/create') || node.originalPath.includes('business/:id/connect') || node.originalPath.includes('posts/create') || 
-                    node.component.includes('BusinessCreate') || node.component.includes('SocialAccountConnect')) {
-                    console.log(`[DEBUG generateGraph - componentToRoute] Mapping component: '${node.component}' to routePath: '${routePath}' (Original Node Path: '${node.originalPath}')`);
-                }
-                // ---- END DEBUG LOGGING for componentToRoute population ----
                 componentToRoute.set(node.component, routePath);
                 // Also map without Component suffix
                 const baseName = node.component.replace(/Component$/, '');
                 if (baseName !== node.component) { // Log if a different baseName is also mapped
-                     // ---- START DEBUG LOGGING for componentToRoute population ----
-                    if (node.originalPath.includes('business/create') || node.originalPath.includes('business/:id/connect') || node.originalPath.includes('posts/create') || 
-                        baseName.includes('BusinessCreate') || baseName.includes('SocialAccountConnect')) {
-                        console.log(`[DEBUG generateGraph - componentToRoute] Also mapping baseName: '${baseName}' to routePath: '${routePath}'`);
-                    }
-                    // ---- END DEBUG LOGGING for componentToRoute population ----
                 componentToRoute.set(baseName, routePath);
                 }
             }
@@ -1320,31 +1284,6 @@ class AngularFlowAnalyzer {
                 targetPath = targetPath.slice(0, -1);
             }
 
-            // ---- START DEBUG LOGGING ----
-            if (flow.from === 'BusinessCreateComponent' || flow.from === 'SocialAccountConnectComponent') {
-                console.log(`[DEBUG generateGraph - FlowProcessing] Processing flow: from '${flow.from}' to '${flow.to}'`);
-                console.log(`[DEBUG generateGraph - FlowProcessing]   Attempting to find sourcePath for '${flow.from}'. Mapped to: '${sourcePath}'`);
-                console.log(`[DEBUG generateGraph - FlowProcessing]   Target path normalized: '${targetPath}'`);
-                if (sourcePath) {
-                    console.log(`[DEBUG generateGraph - FlowProcessing]   Does routeNodes have sourcePath '${sourcePath}'? ${routeNodes.has(sourcePath)}`);
-                } else {
-                    console.log(`[DEBUG generateGraph - FlowProcessing]   sourcePath is undefined for flow.from '${flow.from}'.`);
-                }
-                // Check if targetPath (even if parameterized) can be resolved to a node
-                let targetNodeViaDirectGet = routeNodes.get(targetPath);
-                console.log(`[DEBUG generateGraph - FlowProcessing]   Direct lookup for targetNode '${targetPath}' in routeNodes: ${targetNodeViaDirectGet ? 'FOUND (' + targetNodeViaDirectGet.id + ')' : 'NOT FOUND'}`);
-                if (!targetNodeViaDirectGet) {
-                    let targetNodeViaRegex = Array.from(routeNodes.values()).find(node => {
-                        const pattern = node.originalPath.replace(/:[^\/]+/g, '[^/]+');
-                        const regex = new RegExp(`^${pattern}$`);
-                        return regex.test(targetPath!);
-                    });
-                    console.log(`[DEBUG generateGraph - FlowProcessing]   Regex lookup for targetNode '${targetPath}' in routeNodes: ${targetNodeViaRegex ? 'FOUND (' + targetNodeViaRegex.id + ')' : 'NOT FOUND'}`);
-                }
-
-            }
-            // ---- END DEBUG LOGGING ----
-            
             // Add to edges if source exists
             if (sourcePath && routeNodes.has(sourcePath) && targetPath) { // Ensure targetPath is also somewhat valid
                 flowEdges.push({
@@ -1354,11 +1293,6 @@ class AngularFlowAnalyzer {
                     condition: flow.condition
                 });
             } else {
-                // ---- START DEBUG LOGGING ----
-                if (flow.from === 'BusinessCreateComponent' || flow.from === 'SocialAccountConnectComponent') {
-                     console.log(`[DEBUG generateGraph - FlowProcessing] SKIPPING adding to flowEdges: sourcePath='${sourcePath}' (foundInRouteNodes=${routeNodes.has(sourcePath || '')}), targetPath='${targetPath}'`);
-                }
-                // ---- END DEBUG LOGGING ----
             }
         }
         
@@ -1366,9 +1300,6 @@ class AngularFlowAnalyzer {
         // ... existing code ...
         
         // STEP 6: Create nodes in their respective subgraphs
-        // ---- START DEBUG LOGGING ----
-        console.log(`[DEBUG generateGraph - NodeCreation] Starting STEP 6. Number of routeNodes to process: ${routeNodes.size}`);
-        // ---- END DEBUG LOGGING ----
         for (const [routePath, node] of routeNodes.entries()) {
             const color = getNodeColor(node.category, node.importance); // getNodeColor function is defined in the file
             g.createNode(node.id, { // Use node.id which is the cleaned path
@@ -1379,9 +1310,6 @@ class AngularFlowAnalyzer {
         }
         
         // STEP 7: Create all edges
-        // ---- START DEBUG LOGGING ----
-        console.log(`[DEBUG generateGraph - EdgeCreation] Starting STEP 7. Number of flowEdges to process: ${flowEdges.length}`);
-        // ---- END DEBUG LOGGING ----
         for (const edge of flowEdges) {
             const sourceNode = routeNodes.get(edge.source);
             let actualTargetNode = routeNodes.get(edge.target);
