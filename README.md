@@ -7,7 +7,7 @@ UserPravah (where "Pravah" means *flow*) is a versatile command-line tool for an
 
 Here's an example of what UserPravah can generate for an Angular application:
 
-![UserPravah Sample Output](user-flows.png)
+![UserPravah Sample Output](img/user-flows.png)
 
 This tool is invaluable for:
 *   Understanding complex application architectures.
