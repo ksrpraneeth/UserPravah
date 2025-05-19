@@ -211,7 +211,3 @@ With the help of the community through contributions and bug reporting, we can m
 ## License
 
 This project is licensed under the MIT License. See the `LICENSE` file for details.
-
----
-
-*This README was generated with assistance from an AI model.* 
