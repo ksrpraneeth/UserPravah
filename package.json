@@ -5,13 +5,19 @@
   "type": "module",
   "main": "dist/src/angular-flow-analyzer.js",
   "bin": {
-    "analyze-angular-flows": "./dist/src/angular-flow-analyzer.js"
+    "userpravah": "./dist/src/angular-flow-analyzer.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "analyze": "ts-node --esm src/angular-flow-analyzer.ts",
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "start": "node dist/src/angular-flow-analyzer.js"
+    "start": "node dist/src/angular-flow-analyzer.js",
+    "test": "chmod +x run-tests.sh && ./run-tests.sh"
   },
   "keywords": [
     "user-flow",
@@ -27,16 +33,19 @@
     "typescript",
     "angular"
   ],
-  "author": "[Your Name or Username] <[your_email@example.com]> (https://your-website.com)",
+  "author": "Praneeth Kalluri",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/[your_username]/userpravah.git"
+    "url": "git+https://github.com/praneethkalluri/userpravah.git"
   },
   "bugs": {
-    "url": "https://github.com/[your_username]/userpravah/issues"
+    "url": "https://github.com/praneethkalluri/userpravah/issues"
   },
-  "homepage": "https://github.com/[your_username]/userpravah#readme",
+  "homepage": "https://github.com/praneethkalluri/userpravah#readme",
+  "engines": {
+    "node": ">=16.0.0"
+  },
   "dependencies": {
     "fast-glob": "^3.3.3",
     "graphviz-cli": "^2.0.0",
