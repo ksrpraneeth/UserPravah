@@ -7,7 +7,9 @@ Join our Discord server for healthy discussions, to ask questions, share ideas, 
 [![Join our Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/HXqWcdjv)
 
 ## Overview
-<img src="img/userpravah_logo.png" alt="UserPravah Logo" width="300"/>
+<p align="center">
+  <img src="img/userpravah_logo.png" alt="UserPravah Logo" width="250"/>
+</p>
 
 UserPravah (where "Pravah" means *flow*) is a versatile command-line tool for analyzing web applications and generating visual diagrams of user navigation paths and page-to-page flows. It helps developers,tester and all stake holders understand complex application user flows, page to page navigations and document user journeys.
 
