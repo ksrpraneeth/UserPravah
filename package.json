@@ -1,0 +1,52 @@
+{
+  "name": "userpravah",
+  "version": "1.0.0",
+  "description": "UserPravah is a versatile command-line tool for analyzing web applications and generating visual diagrams of user navigation paths and page-to-page flows. It helps developers understand complex application architectures, document user journeys, and identify potential navigation issues. Initially supporting Angular, UserPravah aims to expand its capabilities to other popular web frameworks.",
+  "type": "module",
+  "main": "dist/src/angular-flow-analyzer.js",
+  "bin": {
+    "analyze-angular-flows": "./dist/src/angular-flow-analyzer.js"
+  },
+  "scripts": {
+    "analyze": "ts-node --esm src/angular-flow-analyzer.ts",
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/src/angular-flow-analyzer.js"
+  },
+  "keywords": [
+    "user-flow",
+    "pravah",
+    "navigation-graph",
+    "page-flow",
+    "visualization",
+    "diagram",
+    "web-analysis",
+    "code-analysis",
+    "developer-tool",
+    "graphviz",
+    "typescript",
+    "angular"
+  ],
+  "author": "[Your Name or Username] <[your_email@example.com]> (https://your-website.com)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/[your_username]/userpravah.git"
+  },
+  "bugs": {
+    "url": "https://github.com/[your_username]/userpravah/issues"
+  },
+  "homepage": "https://github.com/[your_username]/userpravah#readme",
+  "dependencies": {
+    "fast-glob": "^3.3.3",
+    "graphviz-cli": "^2.0.0",
+    "node-html-parser": "^7.0.1",
+    "ts-graphviz": "^2.1.6",
+    "ts-morph": "^25.0.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3",
+    "@types/node": "^20.11.0"
+  }
+}

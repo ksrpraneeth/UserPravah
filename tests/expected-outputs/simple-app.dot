@@ -1,0 +1,52 @@
+digraph "AngularFlows" {
+  rankdir = "LR";
+  splines = "polyline";
+  nodesep = 1.2;
+  ranksep = 1.8;
+  overlap = false;
+  concentrate = true;
+  edge [
+    fontname = "Arial";
+    fontsize = 9;
+  ];
+  node [
+    shape = "box";
+    style = "filled,rounded";
+    fontname = "Arial";
+    fontsize = 11;
+    margin = "0.15,0.1";
+    height = 0.6;
+  ];
+  "/home" [
+    label = "Home\n(/home)";
+    fillcolor = "#dff478";
+    fontcolor = "#333333";
+  ];
+  "/" [
+    label = "Root\n(/)";
+    fillcolor = "#FF8C00";
+    fontcolor = "#333333";
+  ];
+  "/about/id" [
+    label = "About\n(/about/:id)";
+    fillcolor = "#8d7885";
+    fontcolor = "#333333";
+  ];
+  "/" -> "/home" [
+    label = "";
+    color = "#A9A9A9";
+    arrowhead = "none";
+  ];
+  "/about/id" -> "/" [
+    label = "";
+    color = "#4682B4";
+  ];
+  "/" -> "/about/id" [
+    label = "";
+    color = "#006400";
+  ];
+  "/" -> "/about/id" [
+    label = "";
+    color = "#006400";
+  ];
+}

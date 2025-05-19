@@ -1,0 +1,33 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "baseUrl": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "moduleResolution": "bundler", 
+    "skipLibCheck": true,
+    "outDir": "./dist/out-tsc",
+    "rootDir": "./src",
+    "lib": ["es2022", "dom"]
+  },
+  "files": [
+    "src/main.ts", 
+    "src/app/app.config.ts",
+    "src/app/app.component.ts",
+    "src/app/home.component.ts",
+    "src/app/about.component.ts",
+    "src/app/not-found.component.ts"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ],
+  "angularCompilerOptions": {
+    "enableIvy": true,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+} 
