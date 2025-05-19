@@ -4,6 +4,7 @@
 
 UserPravah (where "Pravah" means *flow*) is a versatile command-line tool for analyzing web applications and generating visual diagrams of user navigation paths and page-to-page flows. It helps developers,tester and all stake holders understand complex application user flows, page to page navigations and document user journeys.
 
+
 Here's an example of what UserPravah can generate for an Angular application:
 
 ![UserPravah Sample Output](user-flows.png)
