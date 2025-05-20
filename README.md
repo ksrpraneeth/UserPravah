@@ -1,11 +1,31 @@
 # User Pravah - User Flow Visualizer
 
+<p align="center">
+    <a href="https://www.npmjs.com/package/userpravah">
+        <img src="https://img.shields.io/npm/dw/userpravah?logo=npm&label=downloads" alt="NPM Weekly Downloads"/>
+    </a>
+  <a href="https://www.npmjs.com/package/userpravah">
+    <img src="https://img.shields.io/npm/v/userpravah?logo=npm&label=npm" alt="NPM Version"/>
+  </a>
+ 
+  <a href="https://github.com/ksrpraneeth/userpravah/blob/main/LICENSE">
+    <img src="https://img.shields.io/npm/l/userpravah?color=blue" alt="License"/>
+  </a>
+  <img src="https://img.shields.io/badge/build-passing-green.svg" alt="Build Status"/>
+  <a href="https://discord.gg/HXqWcdjv">
+    <img src="https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white" alt="Join our Discord"/>
+  </a>
+   <a href="https://github.com/ksrpraneeth/userpravah">
+    <img src="https://img.shields.io/github/stars/ksrpraneeth/userpravah?style=social" alt="GitHub Stars"/>
+  </a>
+</p>
+
 ## Community & Discussion
 
 Join our Discord server for healthy discussions, to ask questions, share ideas, or to collaborate on UserPravah!
-
-[![Join our Discord](https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white)](https://discord.gg/HXqWcdjv)
-
+<div><a href="https://discord.gg/HXqWcdjv">
+    <img src="https://img.shields.io/badge/Discord-Join%20Chat-5865F2?logo=discord&logoColor=white" alt="Join our Discord"/>
+</a></div>
 ## Overview
 <p align="center">
   <img src="img/userpravah_logo.png" alt="UserPravah Logo" width="250"/>

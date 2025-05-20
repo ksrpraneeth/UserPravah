@@ -37,12 +37,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/praneethkalluri/userpravah.git"
+    "url": "git+https://github.com/ksrpraneeth/userpravah.git"
   },
   "bugs": {
-    "url": "https://github.com/praneethkalluri/userpravah/issues"
+    "url": "https://github.com/ksrpraneeth/userpravah/issues"
   },
-  "homepage": "https://github.com/praneethkalluri/userpravah#readme",
+  "homepage": "https://github.com/ksrpraneeth/userpravah#readme",
   "engines": {
     "node": ">=16.0.0"
   },
