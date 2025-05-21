@@ -24,7 +24,7 @@ interface NavigationFlow {
     from: string;
     to: string;
     type: 'static' | 'dynamic' | 'guard' | 'redirect';
-    condition?: string;
+    // condition?: string; // Removed
 }
 
 interface MenuDefinition {
@@ -980,36 +980,10 @@ class AngularFlowAnalyzer {
             }
         }
 
-        // Attempt to extract a brief condition/label from leading comments or an enclosing if-statement
-        let conditionLabel: string | undefined = undefined;
-
-        // Check for an enclosing if-statement
-        const enclosingIf = callNode.getFirstAncestorByKind(SyntaxKind.IfStatement);
-        if (enclosingIf) {
-            const condText = enclosingIf.getExpression().getText();
-            conditionLabel = condText.length > 40 ? condText.substring(0, 37) + '...' : condText;
-        }
-
-        // If no if-statement, look for leading comments right before the call
-        if (!conditionLabel) {
-            const leadingCommentRanges = callNode.getLeadingCommentRanges();
-            if (leadingCommentRanges && leadingCommentRanges.length > 0) {
-                const srcFileText = callNode.getSourceFile().getFullText();
-                const commentRange = leadingCommentRanges[0] as any;
-                const commentStart = commentRange.pos;
-                const commentEnd = commentRange.end;
-                const commentText = srcFileText.substring(commentStart, commentEnd)
-                    .replace(/\*|\/\//g, '')
-                    .trim();
-                if (commentText) {
-                    conditionLabel = commentText.length > 40 ? commentText.substring(0, 37) + '...' : commentText;
-                }
-            }
-        }
+        // Removed old conditionLabel extraction logic
 
         const from = (containingClass && containingClass.getNameNode()) ? containingClass.getName()! : fromContextIdentifier;
-        console.log(`[AngularFlowAnalyzer] Extracted programmatic navigation: from "${from}" to "${targetPath}" in ${filePath}${conditionLabel ? ' condition="' + conditionLabel + '"' : ''}`);
-        return { from, to: targetPath, type: 'dynamic', condition: conditionLabel };
+        return { from, to: targetPath, type: 'dynamic' }; // No condition/label set here
     }
 
     private extractTemplateNavigation(content: string, templateFilePath: string, fromComponentName: string): void {
@@ -1061,10 +1035,10 @@ class AngularFlowAnalyzer {
         const g = digraph('AngularFlows', {
             rankdir: 'LR',
             splines: 'polyline',  // Use polyline instead of curved for better label support
-            nodesep: 1.2,
-            ranksep: 1.8,
+            nodesep: 1.5, // Increased from 1.2
+            ranksep: 2.2, // Increased from 1.8
             overlap: false,
-            concentrate: true
+            concentrate: false // Changed from true
         });
         
         // Configure node styling
@@ -1093,13 +1067,15 @@ class AngularFlowAnalyzer {
             category: string;        // Category based on the first path segment
             component?: string;      // Associated component if any
             importance: number;      // Importance score based on incoming/outgoing edges
+            guards?: string[];       // Added to store guards for the route
         }
         
         interface FlowEdge {
             source: string;          // Source node ID
             target: string;          // Target node ID
             type: string;            // Type of navigation (static, dynamic, redirect)
-            condition?: string;      // Any condition for this navigation
+            // condition?: string;   // Changed from condition
+            label?: string;         // To label, stores "AuthGuard" or "lite" for dynamic
         }
         
         // Map to store all nodes by their original path
@@ -1195,7 +1171,8 @@ class AngularFlowAnalyzer {
                 pathDepth,
                 category,
                 component: route.component,
-                importance: 0
+                importance: 0,
+                guards: route.guards // Populate guards here
             });
             
             // Add redirects to the edges array
@@ -1214,7 +1191,7 @@ class AngularFlowAnalyzer {
                 flowEdges.push({
                     source: route.fullPath,
                     target: targetPath,
-                    type: 'redirect'
+                    type: 'redirect' // label is undefined
                 });
             }
         }
@@ -1234,7 +1211,7 @@ class AngularFlowAnalyzer {
                 flowEdges.push({
                     source: parentPath,
                     target: routePath,
-                    type: 'hierarchy'
+                    type: 'hierarchy' // label is undefined
                 });
             }
         }
@@ -1284,15 +1261,39 @@ class AngularFlowAnalyzer {
                 targetPath = targetPath.slice(0, -1);
             }
 
-            // Add to edges if source exists
-            if (sourcePath && routeNodes.has(sourcePath) && targetPath) { // Ensure targetPath is also somewhat valid
+            let edgeLabel: string | undefined = undefined;
+            if (flow.type === 'dynamic') {
+                let resolvedTargetNodeForGuards: RouteNode | undefined;
+                const potentialTargetNode = routeNodes.get(targetPath);
+
+                if (potentialTargetNode) {
+                    resolvedTargetNodeForGuards = potentialTargetNode;
+                } else { 
+                    for (const [_, rn] of routeNodes.entries()) {
+                        const patternText = rn.originalPath.replace(/:[^\\/]+/g, '[^/]+');
+                        const regex = new RegExp(`^${patternText}$`);
+                        if (regex.test(targetPath)) {
+                            resolvedTargetNodeForGuards = rn;
+                            break;
+                        }
+                    }
+                }
+
+                if (resolvedTargetNodeForGuards && resolvedTargetNodeForGuards.guards && resolvedTargetNodeForGuards.guards.length > 0) {
+                    edgeLabel = resolvedTargetNodeForGuards.guards.join(', '); // Join all guard names
+                }
+                // If no guards, edgeLabel remains undefined
+            }
+
+            if (sourcePath && routeNodes.has(sourcePath) && targetPath) {
                 flowEdges.push({
                     source: sourcePath,
-                    target: targetPath, // targetPath here is still potentially parameterized, e.g., /business/:id/connect
+                    target: targetPath,
                     type: flow.type,
-                    condition: flow.condition
+                    label: edgeLabel // Set the determined label for dynamic flows
                 });
             } else {
+                // console.log(...);
             }
         }
         
@@ -1330,26 +1331,24 @@ class AngularFlowAnalyzer {
             }
 
             if (sourceNode && actualTargetNode) {
-                const edgeKey = `${sourceNode.id}->${actualTargetNode.id}->${edge.type}${edge.condition ? '->' + edge.condition : ''}`;
+                // Use edge.label (which is "AuthGuard" or "lite" for dynamic) for the edgeKey
+                const edgeKey = `${sourceNode.id}->${actualTargetNode.id}->${edge.type}${edge.label ? '->' + edge.label : ''}`;
                 if (!existingEdges.has(edgeKey)) {
                     let edgeAttrs: any = {
-                        label: '', // Set label to empty string to remove it from the graph
+                        label: edge.label || '', // Use the new edge.label for display
                     };
                     if (edge.type === 'redirect') {
                         edgeAttrs.style = 'dashed';
                         edgeAttrs.color = 'blue';
-                        // edgeAttrs.label remains empty
                     } else if (edge.type === 'dynamic') {
                         edgeAttrs.color = '#006400'; // DarkGreen
-                        // edgeAttrs.label remains empty
+                        // Label is already set via edge.label
                     } else if (edge.type === 'static') {
                         edgeAttrs.color = '#4682B4'; // SteelBlue
-                        // edgeAttrs.label remains empty
                     } else if (edge.type === 'hierarchy') {
                         edgeAttrs.color = '#A9A9A9'; // DarkGray
                         edgeAttrs.arrowhead = 'none';
-                        // edgeAttrs.label remains empty
-            }
+                    }
             
                     g.createEdge([sourceNode.id, actualTargetNode.id], edgeAttrs);
                     existingEdges.add(edgeKey);
