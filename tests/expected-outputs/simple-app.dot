@@ -1,10 +1,10 @@
 digraph "AngularFlows" {
   rankdir = "LR";
   splines = "polyline";
-  nodesep = 1.2;
-  ranksep = 1.8;
+  nodesep = 1.5;
+  ranksep = 2.2;
   overlap = false;
-  concentrate = true;
+  concentrate = false;
   edge [
     fontname = "Arial";
     fontsize = 9;
@@ -40,10 +40,6 @@ digraph "AngularFlows" {
   "/about/id" -> "/" [
     label = "";
     color = "#4682B4";
-  ];
-  "/" -> "/about/id" [
-    label = "";
-    color = "#006400";
   ];
   "/" -> "/about/id" [
     label = "";

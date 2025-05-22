@@ -57,8 +57,14 @@ run_test_case() {
     echo "  🎉 SUCCESS: Output for ${project_name} matches expected."
   else
     echo "  ❌ FAILURE: Output for ${project_name} does not match expected."
-    echo "     To update the expected output, run:"
-    echo "     cp ${GENERATED_DOT_FILE} ${expected_dot_file}"
+    if [ "$UPDATE_MODE" = true ]; then
+      echo "     🔄 Automatically updating expected output file: ${expected_dot_file}"
+      cp "${GENERATED_DOT_FILE}" "${expected_dot_file}"
+      echo "     ✅ Expected output for ${project_name} updated successfully."
+    else
+      echo "     To update the expected output, run manually:"
+      echo "     cp \"${GENERATED_DOT_FILE}\" \"${expected_dot_file}\""
+    fi
     # return 1 # Optionally, make the script exit on first test failure
   fi
 
@@ -75,6 +81,17 @@ run_test_case() {
 # Add project names to this array to run them
 TEST_PROJECTS=("simple-app" "lazy-load-app")
 # TEST_PROJECTS=("simple-app" "lazy-load-app" "redirect-app") # Example for more tests
+
+# --- Argument Parsing for Update Mode ---
+UPDATE_MODE=false
+# Check if --update flag is provided
+for arg in "$@"; do
+  if [[ "$arg" == "--update" ]]; then
+    UPDATE_MODE=true
+    echo "💡 Update mode enabled: Expected outputs will be updated on mismatch."
+    break # Flag found, no need to check further args for this specific flag
+  fi
+done
 
 # --- Run Tests ---
 total_tests=${#TEST_PROJECTS[@]}

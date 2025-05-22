@@ -1,10 +1,10 @@
 digraph "AngularFlows" {
   rankdir = "LR";
   splines = "polyline";
-  nodesep = 1.2;
-  ranksep = 1.8;
+  nodesep = 1.5;
+  ranksep = 2.2;
   overlap = false;
-  concentrate = true;
+  concentrate = false;
   edge [
     fontname = "Arial";
     fontsize = 9;
