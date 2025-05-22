@@ -62,6 +62,34 @@ Before you can use this tool, you need to have the following installed:
 *   **Node.js**: Version 16.x or higher is recommended.
 *   **npm** (or yarn/pnpm): Usually comes with Node.js.
 *   **Graphviz**: This is required to generate the PNG image from the DOT file. You can download it from [graphviz.org](https://graphviz.org/download/). Ensure the `dot` command is in your system's PATH.
+    *   **macOS (using Homebrew):**
+        ```bash
+        brew install graphviz
+        ```
+    *   **Windows (using Chocolatey or Winget):**
+        *   Using Chocolatey:
+            ```bash
+            choco install graphviz
+            ```
+        *   Using Winget:
+            ```bash
+            winget install graphviz.graphviz
+            ```
+        *   Alternatively, download the installer from the [Graphviz downloads page](https://graphviz.org/download/). Remember to add Graphviz to your system's PATH environmental variable during or after installation.
+    *   **Linux (using package managers):**
+        *   For Debian/Ubuntu-based systems:
+            ```bash
+            sudo apt-get update
+            sudo apt-get install graphviz -y
+            ```
+        *   For Fedora/RHEL-based systems:
+            ```bash
+            sudo dnf install graphviz -y
+            ```
+        *   For Arch Linux:
+            ```bash
+            sudo pacman -S graphviz
+            ```
 
 ## Installation
 
@@ -92,51 +120,23 @@ Upon completion, UserPravah will generate the following files in your current di
 *   `user-flows.dot`: The graph definition file in DOT language.
 *   `user-flows.png`: The visual graph image.
 
-## Usage
-
-To analyze a supported project (currently Angular) and generate the user flow diagram:
-
-1.  Navigate to the `graphgeneratorts` directory in your terminal.
-2.  Run the `analyze` script using npm, providing the path to your project as an argument after `--`:
-
-    ```bash
-    # For Angular projects:
-    npm run analyze -- <path_to_your_angular_project_root>
-    ```
-
-    **Examples (Angular):**
-
-    *   If your Angular project is in a sibling directory called `my-angular-app`:
-        ```bash
-        npm run analyze -- ../my-angular-app
-        ```
-    *   If your Angular project is at `/Users/me/projects/my-cool-app`:
-        ```bash
-        npm run analyze -- /Users/me/projects/my-cool-app
-        ```
-
-    **Capturing Logs:**
-
-    For debugging or detailed inspection, you can redirect the output to a file:
-    ```bash
-    npm run analyze -- <path_to_your_project> >> output.log
-    ```
-
-3.  The script will output logs to the console (or your specified file) during analysis.
-4.  Upon completion, two files will be generated in the `graphgeneratorts` directory:
-    *   `user-flows.dot`: The graph definition file in DOT language.
-    *   `user-flows.png`: The visual graph image.
 
 ## Interpreting the Graph
 
 *   **Nodes**: Represent pages or routes in your application.
-    *   The label shows a display name (derived from the component or path segment) and the full route path.
-    *   Nodes are colored based on their top-level path segment for easier visual grouping (e.g., `/auth` routes might share a color).
+    *   The label shows a display name and the full route path. 
+        *   **Display Name**: Derived either from the component name (e.g., `UserDashboardComponent` becomes "User Dashboard") or from the last segment of the route's path (e.g., `/admin/reports` would use "Reports"). CamelCase names are converted to Title Case.
+        *   **Full Route Path**: The original, complete path (e.g., `/admin/users/:id`) is shown in parentheses below the display name.
+    *   **Coloring**:
+        *   The **Root** node (`/`) is always **Orange** (`#FF8C00`).
+        *   Other nodes are colored based on their top-level path segment (e.g., all routes under `/settings/...` will share a similar color). This is achieved by generating a consistent color from the first segment of the path (e.g., "settings"), helping to visually group related application areas.
+    *   **Shape**: Nodes are rectangular boxes with rounded corners.
 *   **Edges (Arrows)**: Represent navigation paths or relationships.
-    *   **Solid Dark Green Arrows**: Programmatic navigation (e.g., `router.navigate()` in Angular).
-    *   **Solid Steel Blue Arrows**: Template-based navigation (e.g., `[routerLink]` in Angular).
-    *   **Dashed Blue Arrows**: Route redirects.
-    *   **Gray Arrows (No Arrowhead)**: Hierarchical parent-child route relationships (structural, not direct navigations).
+    *   **Solid Dark Green Arrows (`#006400`)**: Programmatic navigation (e.g., `router.navigate()` or `router.navigateByUrl()` in Angular TypeScript code).
+        *   **Label**: If the destination route is protected by route guards (e.g., `AuthGuard`), the guard names will be displayed as a label on the arrow (e.g., "CanActivateGuard, RoleGuard").
+    *   **Solid Steel Blue Arrows (`#4682B4`)**: Template-based navigation (e.g., `[routerLink]` in Angular HTML templates).
+    *   **Dashed Blue Arrows**: Route redirects (defined with `redirectTo` in route configurations).
+    *   **Dark Gray Arrows (`#A9A9A9`) with No Arrowhead**: Hierarchical parent-child route relationships. These illustrate the structural nesting of routes (e.g., `/products` as a parent of `/products/details`) and do not represent a direct user navigation click.
 
 ## How it Works (General Approach)
 
@@ -179,7 +179,6 @@ If you'd like to contribute to the development of UserPravah, here's how you can
     # Or if you just have the directory, navigate into it
     # cd graphgeneratorts 
     ```
-    *(Note: The script currently resides in a subdirectory named `graphgeneratorts`. This might be streamlined in the future.)*
 
 2.  **Install dependencies:**
     ```bash
