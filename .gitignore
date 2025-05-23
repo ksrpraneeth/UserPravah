@@ -17,3 +17,6 @@ yarn-error.log*
 coverage/
 .sass-cache/
 .cache/
+REFACTORING_SUMMARY.md
+*.json
+*.png
