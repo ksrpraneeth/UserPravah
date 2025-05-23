@@ -1,11 +1,20 @@
 {
   "name": "userpravah",
-  "version": "0.0.10",
-  "description": "UserPravah is a versatile command-line tool for analyzing web applications and generating visual diagrams of user navigation paths and page-to-page flows. It helps developers understand complex application architectures, document user journeys, and identify potential navigation issues. Initially supporting Angular, UserPravah aims to expand its capabilities to other popular web frameworks.",
+  "version": "0.1.0",
+  "description": "UserPravah is an extensible, framework-agnostic tool for analyzing user flows and navigation patterns in web applications. It supports multiple frameworks (Angular, React) and output formats (DOT/Graphviz, JSON) with a plugin-based architecture for easy extension.",
   "type": "module",
-  "main": "dist/src/angular-flow-analyzer.js",
+  "main": "dist/src/index.js",
   "bin": {
-    "userpravah": "dist/src/angular-flow-analyzer.js"
+    "userpravah": "dist/src/main.js"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/src/index.js",
+      "types": "./dist/src/index.d.ts"
+    },
+    "./cli": {
+      "import": "./dist/src/main.js"
+    }
   },
   "files": [
     "dist",
@@ -13,11 +22,14 @@
     "LICENSE"
   ],
   "scripts": {
-    "analyze": "ts-node --esm src/angular-flow-analyzer.ts",
+    "analyze": "node dist/src/main.js",
+    "analyze:dev": "ts-node --esm src/main.ts",
     "build": "tsc",
     "prepublishOnly": "npm run build",
-    "start": "node dist/src/angular-flow-analyzer.js",
-    "test": "chmod +x run-tests.sh && ./run-tests.sh"
+    "start": "node dist/src/main.js",
+    "test": "npm run build && chmod +x run-tests.sh && ./run-tests.sh",
+    "dev": "ts-node --esm src/main.ts",
+    "lint": "tsc --noEmit"
   },
   "keywords": [
     "user-flow",
@@ -31,7 +43,13 @@
     "developer-tool",
     "graphviz",
     "typescript",
-    "angular"
+    "angular",
+    "react",
+    "framework-agnostic",
+    "extensible",
+    "plugin-based",
+    "multi-framework",
+    "routing-analysis"
   ],
   "author": "Praneeth Kalluri",
   "license": "MIT",
