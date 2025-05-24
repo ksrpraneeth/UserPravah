@@ -1,0 +1,80 @@
+digraph "AngularFlows" {
+  rankdir = "LR";
+  splines = "polyline";
+  nodesep = 1.5;
+  ranksep = 2.2;
+  overlap = false;
+  concentrate = false;
+  edge [
+    fontname = "Arial";
+    fontsize = 9;
+  ];
+  node [
+    shape = "box";
+    style = "filled,rounded";
+    fontname = "Arial";
+    fontsize = 11;
+    margin = "0.15,0.1";
+    height = 0.6;
+  ];
+  "/" [
+    label = "Root\n(/)";
+    fillcolor = "#FF8C00";
+    fontcolor = "#333333";
+  ];
+  "/about" [
+    label = "About /\n(/about)";
+    fillcolor = "#8d7885";
+    fontcolor = "#333333";
+  ];
+  "/contact" [
+    label = "Contact /\n(/contact)";
+    fillcolor = "#7878b7";
+    fontcolor = "#333333";
+  ];
+  "/users/id" [
+    label = "User Profile /\n(/users/:id)";
+    fillcolor = "#788ea6";
+    fontcolor = "#333333";
+  ];
+  "/dashboard" [
+    label = "Dashboard /\n(/dashboard)";
+    fillcolor = "#94ea8a";
+    fontcolor = "#333333";
+  ];
+  "/settings" [
+    label = "Settings /\n(/settings)";
+    fillcolor = "#78bc82";
+    fontcolor = "#333333";
+  ];
+  "/*" [
+    label = "Not Found /\n(/*)";
+    fillcolor = "#787878";
+    fontcolor = "#333333";
+  ];
+  "/" -> "/about" [
+    label = "";
+    color = "#A9A9A9";
+    arrowhead = "none";
+  ];
+  "/" -> "/contact" [
+    label = "";
+    color = "#A9A9A9";
+    arrowhead = "none";
+  ];
+  "/" -> "/dashboard" [
+    label = "";
+    color = "#A9A9A9";
+    arrowhead = "none";
+  ];
+  "/" -> "/settings" [
+    label = "";
+    color = "#A9A9A9";
+    arrowhead = "none";
+  ];
+  "/" -> "/*" [
+    label = "";
+    color = "#A9A9A9";
+    arrowhead = "none";
+  ];
+}
