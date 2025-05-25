@@ -1,6 +1,6 @@
 {
   "name": "userpravah",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "UserPravah is an extensible, framework-agnostic tool for analyzing user flows and navigation patterns in web applications. It supports multiple frameworks (Angular, React) and output formats (DOT/Graphviz, JSON) with a plugin-based architecture for easy extension.",
   "type": "module",
   "main": "dist/src/index.js",
