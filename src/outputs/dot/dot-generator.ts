@@ -24,7 +24,7 @@ export class DotGenerator implements IOutputGenerator {
       "filename",
       "generateImage",
       "layout", // 'LR', 'TB', 'BT', 'RL'
-      "theme", // 'default', 'dark', 'colorful'
+      "theme", // 'light', 'dark'
       "rankdir",
       "splines",
       "nodesep",
@@ -47,9 +47,10 @@ export class DotGenerator implements IOutputGenerator {
 
     if (
       options.theme &&
-      !["default", "dark", "colorful"].includes(options.theme)
+      options.theme !== "" &&
+      !["light", "dark"].includes(options.theme)
     ) {
-      errors.push("theme must be one of: default, dark, colorful");
+      errors.push("theme must be one of: light, dark");
     }
 
     return errors;
@@ -66,7 +67,7 @@ export class DotGenerator implements IOutputGenerator {
       filename: "user-flows",
       generateImage: true,
       layout: "LR",
-      theme: "default",
+      theme: "light",
       rankdir: "LR",
       splines: "polyline",
       nodesep: 1.5,
@@ -111,18 +112,21 @@ export class DotGenerator implements IOutputGenerator {
   }
 
   private createGraph(analysisResult: AnalysisResult, options: any): any {
-    // Create the main graph with styling
+    // Create the main graph with styling optimized for compact layout
     const g = digraph("AngularFlows", {
       rankdir: options.rankdir || "LR",
-      splines: options.splines || "polyline",
-      nodesep: options.nodesep || 1.5,
-      ranksep: options.ranksep || 2.2,
+      splines: "ortho", // Use orthogonal lines for perfectly organized right angles
+      nodesep: 0.8, // Reduced spacing between nodes
+      ranksep: 1.5, // Reduced spacing between ranks
       overlap: false,
-      concentrate: false,
+      concentrate: true, // Merge edges for cleaner layout
+      compound: true,
+      pack: true, // Pack components tightly
+      packmode: "graph", // Pack the entire graph
     });
 
     // Apply theme-based styling
-    this.applyTheme(g, options.theme || "default");
+    this.applyTheme(g, options.theme || "light");
 
     // Convert analysis results to graph structure
     const { routeNodes, flowEdges } =
@@ -132,7 +136,7 @@ export class DotGenerator implements IOutputGenerator {
       `📊 Creating graph with ${routeNodes.size} nodes and ${flowEdges.length} edges`
     );
 
-    // Create nodes
+    // Create nodes with improved styling
     for (const [routePath, node] of routeNodes.entries()) {
       const color = this.getNodeColor(
         node.category,
@@ -141,41 +145,71 @@ export class DotGenerator implements IOutputGenerator {
       );
       const fontColor = this.getFontColor(options.theme);
 
-      g.createNode(node.id, {
-        label: `${node.displayName}\\n(${node.originalPath.replace(
-          /"/g,
-          '\\"'
-        )})`,
-        fillcolor: color,
-        fontcolor: fontColor as any,
-      });
+      // Special styling for root node
+      if (routePath === "ROOT") {
+        g.createNode(node.id, {
+          label: node.displayName,
+          fillcolor: "#FF6B35",
+          fontcolor: fontColor as any,
+          style: "filled,rounded",
+          penwidth: 3,
+          fontsize: options.theme === "dark" ? 16 : 15, // Larger font for root node
+          shape: "ellipse", // Different shape for root
+        });
+      } else {
+        g.createNode(node.id, {
+          label: `${node.displayName}\\n(${node.originalPath.replace(
+            /"/g,
+            '\\"'
+          )})`,
+          fillcolor: color,
+          fontcolor: fontColor as any,
+          style: "filled,rounded",
+          penwidth: 2,
+          fontsize: options.theme === "dark" ? 13 : 12, // Larger font for dark theme
+          width: 2.0, // Fixed width for consistency
+          height: 0.8, // Fixed height for consistency
+        });
+      }
     }
 
-    // Create edges
+    // Create edges with improved styling
     const existingEdges = new Set<string>();
     for (const edge of flowEdges) {
       const sourceNode = routeNodes.get(edge.source);
-      let actualTargetNode = routeNodes.get(edge.target);
+      let targetNode = routeNodes.get(edge.target);
 
-      // Handle parameterized routes
-      if (!actualTargetNode && edge.target) {
-        for (const [_, rn] of routeNodes.entries()) {
-          const patternText = rn.originalPath.replace(/:[^\\/]+/g, "[^/]+");
-          const regex = new RegExp(`^${patternText}$`);
-          if (regex.test(edge.target)) {
-            actualTargetNode = rn;
+      // If target is not found by key, try to find by path (for redirects)
+      if (!targetNode && edge.type === "redirect") {
+        for (const [key, node] of routeNodes.entries()) {
+          if (node.originalPath === edge.target) {
+            targetNode = node;
+            edge.target = key; // Update to use the key
             break;
           }
         }
       }
 
-      if (sourceNode && actualTargetNode) {
-        const edgeKey = `${sourceNode.id}->${actualTargetNode.id}->${
+      // Handle parameterized routes
+      if (!targetNode && edge.target) {
+        for (const [key, rn] of routeNodes.entries()) {
+          const patternText = rn.originalPath.replace(/:[^\\/]+/g, "[^/]+");
+          const regex = new RegExp(`^${patternText}$`);
+          if (regex.test(edge.target)) {
+            targetNode = rn;
+            edge.target = key; // Update to use the key
+            break;
+          }
+        }
+      }
+
+      if (sourceNode && targetNode) {
+        const edgeKey = `${sourceNode.id}->${targetNode.id}->${
           edge.type
         }${edge.label ? "->" + edge.label : ""}`;
         if (!existingEdges.has(edgeKey)) {
           const edgeAttrs = this.getEdgeAttributes(edge, options.theme);
-          g.createEdge([sourceNode.id, actualTargetNode.id], edgeAttrs);
+          g.createEdge([sourceNode.id, targetNode.id], edgeAttrs);
           existingEdges.add(edgeKey);
         }
       }
@@ -191,17 +225,137 @@ export class DotGenerator implements IOutputGenerator {
     const routeNodes = new Map<string, RouteNode>();
     const flowEdges: FlowEdge[] = [];
 
-    // Convert routes to nodes
-    for (const route of analysisResult.routes) {
-      if (!route.fullPath) continue;
-      if (route.fullPath.includes("**")) continue; // Skip wildcard routes
+    // Graph data structure to properly model the routing hierarchy
+    class RouteGraph {
+      private nodes = new Map<string, {
+        route: any;
+        nodeId: string;
+        children: Set<string>;
+        parent?: string;
+        isLayoutComponent: boolean;
+        isTopLevel: boolean;
+      }>();
 
+      addRoute(route: any, parentId?: string) {
+        if (!route.fullPath || route.fullPath.includes("**")) return;
+
+        const isLayoutComponent = !!(route.component && route.children && route.children.length > 0);
+        const isTopLevel = !parentId && route.fullPath !== "/";
+        
+        // Create unique node ID
+        let nodeId: string;
+        if (isLayoutComponent) {
+          nodeId = `layout_${route.component}_${route.fullPath}`;
+        } else {
+          nodeId = route.fullPath;
+        }
+
+        // Add node to graph
+        this.nodes.set(nodeId, {
+          route,
+          nodeId,
+          children: new Set(),
+          parent: parentId,
+          isLayoutComponent,
+          isTopLevel
+        });
+
+        // Add to parent's children if parent exists
+        if (parentId && this.nodes.has(parentId)) {
+          this.nodes.get(parentId)!.children.add(nodeId);
+        }
+
+        // Process children recursively
+        if (route.children && Array.isArray(route.children)) {
+          for (const childRoute of route.children) {
+            // Skip redirect-only routes as children of layout components
+            if (childRoute.redirectTo && !childRoute.component && isLayoutComponent) {
+              continue;
+            }
+            this.addRoute(childRoute, nodeId);
+          }
+        }
+
+        return nodeId;
+      }
+
+      getNodes() {
+        return this.nodes;
+      }
+
+      // Get the proper hierarchy edges with root connections
+      getHierarchyEdges(): Array<{source: string, target: string}> {
+        const edges: Array<{source: string, target: string}> = [];
+        
+        // Add edges from parent to children
+        for (const [nodeId, node] of this.nodes) {
+          if (node.parent) {
+            edges.push({
+              source: node.parent,
+              target: nodeId
+            });
+          }
+        }
+        
+        // Connect top-level routes to root
+        const rootNodeId = "ROOT";
+        for (const [nodeId, node] of this.nodes) {
+          if (node.isTopLevel || (node.route.fullPath === "/" && node.isLayoutComponent)) {
+            edges.push({
+              source: rootNodeId,
+              target: nodeId
+            });
+          }
+        }
+        
+        return edges;
+      }
+
+      // Check if we need a root node
+      needsRootNode(): boolean {
+        return true; // Always create a root for better organization
+      }
+    }
+
+    // Build the route graph
+    const routeGraph = new RouteGraph();
+    
+    // Process all routes and build the graph structure
+    for (const route of analysisResult.routes) {
+      routeGraph.addRoute(route);
+    }
+
+    // Add root node if needed
+    if (routeGraph.needsRootNode()) {
+      routeNodes.set("ROOT", {
+        id: "root",
+        originalPath: "ROOT",
+        displayName: "Root",
+        pathDepth: 0,
+        category: "root",
+        importance: 0,
+      });
+    }
+
+    // Convert graph nodes to RouteNode format
+    for (const [nodeId, graphNode] of routeGraph.getNodes()) {
+      const route = graphNode.route;
       const cleanPath = this.cleanRoutePath(route.fullPath);
       const pathDepth = route.fullPath.split("/").filter(Boolean).length;
       const category = this.getNodeCategory(route.fullPath);
 
       let displayName = "";
-      if (route.fullPath === "/") {
+      let visualNodeId = cleanPath;
+
+      if (graphNode.isLayoutComponent) {
+        // Layout component
+        displayName = route.component.replace(/Component$/, "");
+        displayName = displayName
+          .replace(/([A-Z])/g, " $1")
+          .replace(/^./, (str) => str.toUpperCase())
+          .trim();
+        visualNodeId = `layout_${route.component}`;
+      } else if (route.fullPath === "/" && !route.component) {
         displayName = "Root";
       } else if (route.component) {
         displayName = route.component.replace(/Component$/, "");
@@ -210,19 +364,18 @@ export class DotGenerator implements IOutputGenerator {
           .replace(/^./, (str) => str.toUpperCase())
           .trim();
       } else {
-        const lastSegment =
-          route.fullPath.split("/").filter(Boolean).pop() || "";
+        const lastSegment = route.fullPath.split("/").filter(Boolean).pop() || "";
         displayName = this.deriveDisplayName(lastSegment);
       }
 
-      routeNodes.set(route.fullPath, {
-        id: cleanPath,
+      routeNodes.set(nodeId, {
+        id: visualNodeId,
         originalPath: route.fullPath,
         displayName,
         pathDepth,
         category,
         component: route.component,
-        importance: 0, // Will be calculated later
+        importance: 0,
         guards: route.guards,
       });
 
@@ -243,41 +396,43 @@ export class DotGenerator implements IOutputGenerator {
           targetPath = targetPath.slice(0, -1);
         }
 
-        flowEdges.push({
-          source: route.fullPath,
-          target: targetPath,
-          type: "redirect",
-        });
+        // Find target node by path
+        let targetNodeId: string | undefined;
+        for (const [id, node] of routeNodes.entries()) {
+          if (node.originalPath === targetPath) {
+            targetNodeId = id;
+            break;
+          }
+        }
+
+        if (targetNodeId) {
+          flowEdges.push({
+            source: nodeId,
+            target: targetNodeId,
+            type: "redirect",
+          });
+        }
       }
     }
 
-    // Add parent-child relationships
-    for (const [routePath, node] of routeNodes.entries()) {
-      if (routePath === "/") continue;
-
-      let parentPath = path.dirname(routePath);
-      if (parentPath === ".") parentPath = "/";
-      if (parentPath !== "/" && parentPath.endsWith("/"))
-        parentPath = parentPath.slice(0, -1);
-      if (parentPath === "") parentPath = "/";
-
-      if (routeNodes.has(parentPath) && parentPath !== routePath) {
-        flowEdges.push({
-          source: parentPath,
-          target: routePath,
-          type: "hierarchy",
-        });
-      }
+    // Add hierarchy edges from the graph structure
+    const hierarchyEdges = routeGraph.getHierarchyEdges();
+    for (const edge of hierarchyEdges) {
+      flowEdges.push({
+        source: edge.source,
+        target: edge.target,
+        type: "hierarchy",
+      });
     }
 
     // Add navigation flows
-    const componentToRoute = new Map<string, string>();
-    for (const [routePath, node] of routeNodes.entries()) {
+    const componentToNodeId = new Map<string, string>();
+    for (const [nodeId, node] of routeNodes.entries()) {
       if (node.component) {
-        componentToRoute.set(node.component, routePath);
+        componentToNodeId.set(node.component, nodeId);
         const baseName = node.component.replace(/Component$/, "");
         if (baseName !== node.component) {
-          componentToRoute.set(baseName, routePath);
+          componentToNodeId.set(baseName, nodeId);
         }
       }
     }
@@ -285,23 +440,23 @@ export class DotGenerator implements IOutputGenerator {
     for (const flow of analysisResult.flows) {
       if (!flow.from || !flow.to) continue;
 
-      let sourcePath = componentToRoute.get(flow.from);
-      if (!sourcePath) {
+      let sourceNodeId = componentToNodeId.get(flow.from);
+      if (!sourceNodeId) {
         const baseName = flow.from.replace(/Component$/, "");
-        sourcePath = componentToRoute.get(baseName);
-      }
-      if (!sourcePath && flow.from.startsWith("/")) {
-        sourcePath = flow.from;
+        sourceNodeId = componentToNodeId.get(baseName);
       }
 
       let targetPath = flow.to;
       if (!targetPath.startsWith("/")) {
-        if (sourcePath) {
-          const parentDir =
-            sourcePath.substring(0, sourcePath.lastIndexOf("/") + 1) || "/";
-          targetPath = path.posix
-            .resolve(parentDir, targetPath)
-            .replace(/\\/g, "/");
+        if (sourceNodeId) {
+          const sourceNode = routeNodes.get(sourceNodeId);
+          if (sourceNode) {
+            const parentDir =
+              sourceNode.originalPath.substring(0, sourceNode.originalPath.lastIndexOf("/") + 1) || "/";
+            targetPath = path.posix
+              .resolve(parentDir, targetPath)
+              .replace(/\\/g, "/");
+          }
         } else {
           targetPath = "/" + targetPath;
         }
@@ -312,9 +467,18 @@ export class DotGenerator implements IOutputGenerator {
         targetPath = targetPath.slice(0, -1);
       }
 
+      // Find target node by path
+      let targetNodeId: string | undefined;
+      for (const [nodeId, node] of routeNodes.entries()) {
+        if (node.originalPath === targetPath) {
+          targetNodeId = nodeId;
+          break;
+        }
+      }
+
       let edgeLabel: string | undefined = undefined;
-      if (flow.type === "dynamic") {
-        const potentialTargetNode = routeNodes.get(targetPath);
+      if (flow.type === "dynamic" && targetNodeId) {
+        const potentialTargetNode = routeNodes.get(targetNodeId);
         if (
           potentialTargetNode?.guards &&
           potentialTargetNode.guards.length > 0
@@ -323,10 +487,10 @@ export class DotGenerator implements IOutputGenerator {
         }
       }
 
-      if (sourcePath && routeNodes.has(sourcePath) && targetPath) {
+      if (sourceNodeId && targetNodeId) {
         flowEdges.push({
-          source: sourcePath,
-          target: targetPath,
+          source: sourceNodeId,
+          target: targetNodeId,
           type: flow.type,
           label: edgeLabel,
         });
@@ -341,24 +505,27 @@ export class DotGenerator implements IOutputGenerator {
     graph.attributes.node.set(attribute.shape, "box");
     graph.attributes.node.set(attribute.style, "filled,rounded");
     graph.attributes.node.set(attribute.fontname, "Arial");
-    graph.attributes.node.set(attribute.fontsize, 11);
+    graph.attributes.node.set(attribute.fontsize, theme === "dark" ? 13 : 12); // Larger font for dark theme
     graph.attributes.node.set(attribute.margin, "0.15,0.1");
     graph.attributes.node.set(attribute.height, 0.6);
 
     // Configure edge styling
     graph.attributes.edge.set(attribute.fontname, "Arial");
-    graph.attributes.edge.set(attribute.fontsize, 9);
+    graph.attributes.edge.set(attribute.fontsize, theme === "dark" ? 11 : 10); // Larger edge labels for dark theme
 
     // Apply theme-specific styling
     switch (theme) {
       case "dark":
         graph.attributes.graph.set(attribute.bgcolor, "#2d3748");
+        // Set default edge color for dark theme
+        graph.attributes.edge.set(attribute.color, "#e2e8f0");
+        graph.attributes.edge.set(attribute.fontcolor, "#e2e8f0");
         break;
-      case "colorful":
-        // Will be handled in color generation
-        break;
+      case "light":
       default:
-        // Default theme styling
+        // Light theme styling (previously colorful)
+        graph.attributes.edge.set(attribute.color, "#333333");
+        graph.attributes.edge.set(attribute.fontcolor, "#333333");
         break;
     }
   }
@@ -368,61 +535,82 @@ export class DotGenerator implements IOutputGenerator {
     importance: number,
     theme: string
   ): string {
-    if (category === "root") return "#FF8C00"; // Root is always orange
-
+    // Special color for root - this is universal
+    if (category === "root") return "#FF6B35"; // Vibrant orange for root
+    
+    // Generate vibrant colors based on category hash - completely generic
     switch (theme) {
       case "dark":
-        return this.stringToHexColor(category, true);
-      case "colorful":
-        return this.stringToHexColor(category, false);
+        return this.generateVibrantColor(category, true);
+      case "light":
+        return this.generateVibrantColor(category, false);
       default:
-        return this.stringToHexColor(category, false);
+        return this.generateVibrantColor(category, false);
     }
+  }
+
+  private generateVibrantColor(str: string, dark: boolean = false): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // Generate more vibrant colors using HSL for better control
+    const hue = Math.abs(hash) % 360;
+    const saturation = dark ? 80 : 85; // High saturation for vibrancy
+    const lightness = dark ? 45 : 55; // Darker background for better white text contrast
+
+    return this.hslToHex(hue, saturation, lightness);
+  }
+
+  private hslToHex(h: number, s: number, l: number): string {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = (n: number) => {
+      const k = (n + h / 30) % 12;
+      const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+      return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
   }
 
   private getFontColor(theme: string): string {
     switch (theme) {
       case "dark":
-        return "#ffffff";
+        return "#ffffff"; // Pure white for maximum contrast on dark backgrounds
       default:
-        return "#333333";
+        return "#000000"; // Pure black for maximum contrast on light backgrounds
     }
   }
 
   private getEdgeAttributes(edge: FlowEdge, theme: string): any {
     let edgeAttrs: any = {
       label: edge.label || "",
+      penwidth: 2, // Make edges thicker for better visibility
     };
 
     if (edge.type === "redirect") {
       edgeAttrs.style = "dashed";
-      edgeAttrs.color = theme === "dark" ? "#6b8dd6" : "blue";
+      edgeAttrs.color = theme === "dark" ? "#60A5FA" : "#2563EB"; // Bright blue
+      edgeAttrs.fontcolor = theme === "dark" ? "#E5E7EB" : "#374151";
+      edgeAttrs.penwidth = 2.5;
     } else if (edge.type === "dynamic") {
-      edgeAttrs.color = theme === "dark" ? "#48bb78" : "#006400"; // DarkGreen
+      edgeAttrs.color = theme === "dark" ? "#34D399" : "#059669"; // Bright green
+      edgeAttrs.fontcolor = theme === "dark" ? "#E5E7EB" : "#374151";
+      edgeAttrs.penwidth = 2.5;
     } else if (edge.type === "static") {
-      edgeAttrs.color = theme === "dark" ? "#81c8e8" : "#4682B4"; // SteelBlue
+      edgeAttrs.color = theme === "dark" ? "#A78BFA" : "#7C3AED"; // Bright purple
+      edgeAttrs.fontcolor = theme === "dark" ? "#E5E7EB" : "#374151";
+      edgeAttrs.penwidth = 2.5;
     } else if (edge.type === "hierarchy") {
-      edgeAttrs.color = theme === "dark" ? "#a0aec0" : "#A9A9A9"; // DarkGray
-      edgeAttrs.arrowhead = "none";
+      edgeAttrs.color = theme === "dark" ? "#9CA3AF" : "#6B7280"; // Subtle gray
+      edgeAttrs.fontcolor = theme === "dark" ? "#E5E7EB" : "#374151";
+      edgeAttrs.arrowhead = "vee";
+      edgeAttrs.style = "dotted";
+      edgeAttrs.penwidth = 1.5; // Thinner for hierarchy
     }
 
     return edgeAttrs;
-  }
-
-  private stringToHexColor(str: string, dark: boolean = false): string {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-      hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-
-    let color = "#";
-    for (let i = 0; i < 3; i++) {
-      const value = (hash >> (i * 8)) & 0xff;
-      const brightValue = dark ? Math.max(value, 80) : Math.max(value, 120);
-      color += ("00" + brightValue.toString(16)).substr(-2);
-    }
-
-    return color;
   }
 
   private cleanRoutePath(path: string): string {
