@@ -681,8 +681,16 @@ export class AngularAnalyzer implements IFrameworkAnalyzer {
         sourceFile
       );
       route.children = childRoutes;
-      for (const childRoute of childRoutes) {
-        this.addRouteToCollection(childRoute);
+      
+      // Important: If this route has a component (like MainLayoutComponent), 
+      // we need to ensure it appears as a node in the graph
+      // Only add child routes to the collection if this route has no component
+      // Otherwise, the hierarchy will be preserved through the parent-child relationship
+      if (!route.component && !props["loadComponent"]) {
+        // This is a grouping route without its own component, so flatten the children
+        for (const childRoute of childRoutes) {
+          this.addRouteToCollection(childRoute);
+        }
       }
     }
 

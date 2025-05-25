@@ -12,31 +12,7 @@ async function main() {
 
   // Check for help flag first
   if (process.argv.includes("--help") || process.argv.includes("-h")) {
-    console.log("Usage: user-pravah <project-path> [options]");
-    console.log("");
-    console.log("Options:");
-    console.log(
-      "  --framework <name>     Specify framework (auto-detect if not provided)"
-    );
-    console.log(
-      "  --output <formats>     Output formats (comma-separated, default: dot)"
-    );
-    console.log(
-      "  --output-dir <path>    Output directory (default: current directory)"
-    );
-    console.log(
-      "  --theme <theme>        Theme for DOT output (default, dark, colorful)"
-    );
-    console.log(
-      "  --layout <layout>      Layout for DOT output (LR, TB, BT, RL)"
-    );
-    console.log("  --no-image            Skip image generation for DOT output");
-    console.log("  --help, -h            Show this help message");
-    console.log("");
-    console.log("Examples:");
-    console.log("  user-pravah ./my-angular-app");
-    console.log("  user-pravah ./my-app --framework angular --output dot,json");
-    console.log("  user-pravah ./my-app --theme dark --layout TB");
+    showHelp();
     process.exit(0);
   }
 
@@ -83,7 +59,7 @@ async function main() {
   const outputOptions: any = {
     outputDirectory: process.cwd(),
     generateImage: true,
-    theme: "default",
+    theme: "light",
     layout: "LR",
   };
 
@@ -208,3 +184,38 @@ main().catch((error) => {
   console.error("❌ Startup Error:", error);
   process.exit(1);
 });
+
+function showHelp() {
+  console.log(`
+🚀 UserPravah - Universal User Flow Analyzer
+
+USAGE:
+  userpravah <project-path> [options]
+
+ARGUMENTS:
+  <project-path>         Path to the project to analyze
+
+OPTIONS:
+  --framework <name>     Force specific framework (angular, react)
+  --output <formats>     Output formats (dot, json) - comma separated
+  --output-dir <path>    Output directory (default: current directory)
+  --theme <theme>        Theme for DOT output (light, dark)
+  --layout <direction>   Graph layout direction (LR, TB, BT, RL)
+  --no-image            Skip PNG image generation
+  --help                Show this help message
+
+EXAMPLES:
+  userpravah ./my-angular-app
+  userpravah ./my-react-app --framework react --output dot,json
+  userpravah ./project --theme dark --layout TB
+  userpravah ./project --output-dir ./output --no-image
+
+SUPPORTED FRAMEWORKS:
+  - Angular (routing modules, standalone components)
+  - React (React Router, Next.js App Router)
+
+OUTPUT FORMATS:
+  - DOT: Graphviz format with PNG image generation
+  - JSON: Structured data format
+`);
+}
