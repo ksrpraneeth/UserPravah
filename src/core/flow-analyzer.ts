@@ -47,15 +47,143 @@ export class FlowAnalyzer {
   }
 
   /**
-   * Auto-detect the framework for a project
+   * Recursively search for framework projects up to maxDepth levels deep
    */
-  async detectFramework(projectPath: string): Promise<string | null> {
+  private async findFrameworkProjectsRecursively(
+    rootPath: string,
+    maxDepth: number = 3,
+    currentDepth: number = 0
+  ): Promise<{ framework: string; path: string }[]> {
+    const results: { framework: string; path: string }[] = [];
+
+    if (currentDepth > maxDepth) {
+      return results;
+    }
+
+    // Check current directory for frameworks
     for (const [name, analyzer] of this.frameworkAnalyzers) {
-      if (await analyzer.canAnalyze(projectPath)) {
-        return name;
+      if (await analyzer.canAnalyze(rootPath)) {
+        results.push({ framework: name, path: rootPath });
+        console.log(`✅ Found ${name} project at: ${rootPath}`);
       }
     }
-    return null;
+
+    // If we found a framework at this level and it's not the root, we can return early
+    // to avoid finding nested projects within the same framework
+    if (results.length > 0 && currentDepth > 0) {
+      return results;
+    }
+
+    // Search subdirectories if we haven't reached max depth
+    if (currentDepth < maxDepth) {
+      try {
+        const entries = fs.readdirSync(rootPath, { withFileTypes: true });
+        
+        for (const entry of entries) {
+          if (entry.isDirectory() && !this.shouldSkipDirectory(entry.name)) {
+            const subPath = path.join(rootPath, entry.name);
+            const subResults = await this.findFrameworkProjectsRecursively(
+              subPath,
+              maxDepth,
+              currentDepth + 1
+            );
+            results.push(...subResults);
+          }
+        }
+      } catch (error) {
+        // Ignore directories we can't read
+        console.warn(`⚠️ Could not read directory: ${rootPath}`);
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Check if a directory should be skipped during recursive search
+   */
+  private shouldSkipDirectory(dirName: string): boolean {
+    const skipDirs = [
+      'node_modules',
+      '.git',
+      'dist',
+      'build',
+      '.next',
+      'coverage',
+      '.nyc_output',
+      'tmp',
+      'temp',
+      '.cache',
+      '.vscode',
+      '.idea',
+      '__pycache__',
+      '.pytest_cache',
+      'venv',
+      '.venv',
+      'env',
+      '.env'
+    ];
+    
+    return skipDirs.includes(dirName) || dirName.startsWith('.');
+  }
+
+  /**
+   * Auto-detect the framework for a project, searching recursively up to 3 levels deep
+   */
+  async detectFramework(projectPath: string): Promise<string | null> {
+    console.log(`🔍 Searching for frameworks in ${projectPath} (up to 3 levels deep)...`);
+    
+    const foundProjects = await this.findFrameworkProjectsRecursively(projectPath, 3);
+    
+    if (foundProjects.length === 0) {
+      console.log("❌ No framework projects found");
+      return null;
+    }
+
+    if (foundProjects.length === 1) {
+      console.log(`✅ Found single ${foundProjects[0].framework} project at: ${foundProjects[0].path}`);
+      return foundProjects[0].framework;
+    }
+
+    // Multiple projects found - prioritize by depth (closer to root) and then by framework preference
+    foundProjects.sort((a, b) => {
+      const depthA = a.path.split(path.sep).length;
+      const depthB = b.path.split(path.sep).length;
+      
+      if (depthA !== depthB) {
+        return depthA - depthB; // Prefer shallower paths
+      }
+      
+      // If same depth, prefer Angular over React (arbitrary preference)
+      const frameworkPriority: { [key: string]: number } = { 'angular': 1, 'react': 2 };
+      const priorityA = frameworkPriority[a.framework.toLowerCase()] || 999;
+      const priorityB = frameworkPriority[b.framework.toLowerCase()] || 999;
+      
+      return priorityA - priorityB;
+    });
+
+    console.log(`🎯 Multiple projects found, selecting: ${foundProjects[0].framework} at ${foundProjects[0].path}`);
+    console.log(`   Other projects found:`);
+    foundProjects.slice(1).forEach(project => {
+      console.log(`   - ${project.framework} at ${project.path}`);
+    });
+
+    return foundProjects[0].framework;
+  }
+
+  /**
+   * Get the detected project path for a framework
+   */
+  async getFrameworkProjectPath(projectPath: string, frameworkName?: string): Promise<string> {
+    const foundProjects = await this.findFrameworkProjectsRecursively(projectPath, 3);
+    
+    if (frameworkName) {
+      const project = foundProjects.find(p => p.framework.toLowerCase() === frameworkName.toLowerCase());
+      return project ? project.path : projectPath;
+    }
+    
+    // Return the first (highest priority) project path
+    return foundProjects.length > 0 ? foundProjects[0].path : projectPath;
   }
 
   /**
@@ -70,6 +198,7 @@ export class FlowAnalyzer {
     }
 
     let frameworkName = options.framework.toLowerCase();
+    let actualProjectPath = options.projectPath;
 
     // Auto-detect framework if not specified or if specified framework is not available
     if (
@@ -90,6 +219,18 @@ export class FlowAnalyzer {
 
       frameworkName = detectedFramework;
       console.log(`✅ Detected framework: ${frameworkName}`);
+      
+      // Get the actual project path where the framework was detected
+      actualProjectPath = await this.getFrameworkProjectPath(options.projectPath, frameworkName);
+      if (actualProjectPath !== options.projectPath) {
+        console.log(`📁 Using framework project path: ${actualProjectPath}`);
+      }
+    } else {
+      // Even if framework is specified, get the correct project path
+      actualProjectPath = await this.getFrameworkProjectPath(options.projectPath, frameworkName);
+      if (actualProjectPath !== options.projectPath) {
+        console.log(`📁 Using framework project path: ${actualProjectPath}`);
+      }
     }
 
     // Get the framework analyzer
@@ -102,9 +243,15 @@ export class FlowAnalyzer {
       );
     }
 
+    // Create modified options with the actual project path
+    const modifiedOptions: ProjectAnalysisOptions = {
+      ...options,
+      projectPath: actualProjectPath
+    };
+
     // Perform the analysis
     console.log(`📊 Analyzing with ${frameworkName} analyzer...`);
-    const result = await analyzer.analyze(options);
+    const result = await analyzer.analyze(modifiedOptions);
 
     console.log(
       `✨ Analysis complete! Found ${result.routes.length} routes and ${result.flows.length} navigation flows.`
