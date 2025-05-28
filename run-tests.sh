@@ -109,7 +109,7 @@ test_framework_detection() {
     
     # Test Angular detection
     cd "${TEMP_TEST_DIR}"
-    local project_path="${MOCK_PROJECTS_DIR}/simple-app"
+    local project_path="${MOCK_PROJECTS_DIR}/angular-simple"
     if node "${MAIN_JS_PATH}" "${project_path}" --no-image > output.log 2>&1; then
         if grep -q "Analyzing with angular analyzer" output.log; then
             print_status "SUCCESS" "Angular framework detection works"
@@ -148,7 +148,7 @@ test_multiple_output_formats() {
     cd "${TEMP_TEST_DIR}"
     rm -f *.dot *.png *.json
     
-    local project_path="${MOCK_PROJECTS_DIR}/simple-app"
+    local project_path="${MOCK_PROJECTS_DIR}/angular-simple"
     if node "${MAIN_JS_PATH}" "${project_path}" --output dot,json --no-image > /dev/null 2>&1; then
         local success=true
         
@@ -196,22 +196,22 @@ test_multiple_output_formats() {
 
 # Function to test themes
 test_themes() {
-    print_status "TEST" "Testing DOT themes (default, dark, colorful)..."
+    print_status "TEST" "Testing DOT themes (light, dark)..."
     
-    local themes=("default" "dark" "colorful")
+    local themes=("light" "dark")
     local all_passed=true
     
     for theme in "${themes[@]}"; do
         cd "${TEMP_TEST_DIR}"
         rm -f *.dot *.png
         
-        local project_path="${MOCK_PROJECTS_DIR}/simple-app"
+        local project_path="${MOCK_PROJECTS_DIR}/angular-simple"
         if node "${MAIN_JS_PATH}" "${project_path}" --theme "${theme}" --no-image > /dev/null 2>&1; then
             if [ -f "user-flows.dot" ]; then
                 # Basic validation - check if theme-specific content exists
                 case "$theme" in
                     "dark")
-                        if grep -q "bgcolor.*#2d3748\|fontcolor.*#ffffff" user-flows.dot; then
+                        if grep -q "bgcolor.*#2d3748\|fontcolor.*#e2e8f0" user-flows.dot; then
                             print_status "SUCCESS" "Dark theme applied correctly"
                         else
                             print_status "WARN" "Dark theme may not be fully applied"
@@ -251,7 +251,7 @@ test_layouts() {
         cd "${TEMP_TEST_DIR}"
         rm -f *.dot *.png
         
-        local project_path="${MOCK_PROJECTS_DIR}/simple-app"
+        local project_path="${MOCK_PROJECTS_DIR}/angular-simple"
         if node "${MAIN_JS_PATH}" "${project_path}" --layout "${layout}" --no-image > /dev/null 2>&1; then
             if [ -f "user-flows.dot" ]; then
                 # Check if rankdir is set correctly in DOT file - be more flexible with the check
@@ -287,7 +287,7 @@ test_no_image_flag() {
     cd "${TEMP_TEST_DIR}"
     rm -f *.dot *.png
     
-    local project_path="${MOCK_PROJECTS_DIR}/simple-app"
+    local project_path="${MOCK_PROJECTS_DIR}/angular-simple"
     if node "${MAIN_JS_PATH}" "${project_path}" --no-image > /dev/null 2>&1; then
         if [ -f "user-flows.dot" ] && [ ! -f "user-flows.png" ]; then
             print_status "SUCCESS" "--no-image flag works correctly"
@@ -311,7 +311,7 @@ test_output_directory() {
     local output_dir="${TEMP_TEST_DIR}/custom-output"
     mkdir -p "${output_dir}"
     
-    local project_path="${MOCK_PROJECTS_DIR}/simple-app"
+    local project_path="${MOCK_PROJECTS_DIR}/angular-simple"
     
     if node "${MAIN_JS_PATH}" "${project_path}" --output-dir "${output_dir}" --no-image > /dev/null 2>&1; then
         if [ -f "${output_dir}/user-flows.dot" ]; then
@@ -331,38 +331,65 @@ test_output_directory() {
 test_backward_compatibility() {
     print_status "TEST" "Testing backward compatibility with original expected outputs..."
     
-    local projects=("simple-app" "lazy-load-app")
     local all_passed=true
     
-    for project in "${projects[@]}"; do
-        local project_path="${MOCK_PROJECTS_DIR}/${project}"
-        local expected_file="${EXPECTED_OUTPUTS_DIR}/${project}.dot"
-        
-        cd "${TEMP_TEST_DIR}"
-        rm -f *.dot *.png
-        
-        if node "${MAIN_JS_PATH}" "${project_path}" --no-image > /dev/null 2>&1; then
-            if [ -f "user-flows.dot" ] && [ -f "${expected_file}" ]; then
-                # Compare with expected output (allowing for minor formatting differences)
-                if diff -w "user-flows.dot" "${expected_file}" > /dev/null 2>&1; then
-                    print_status "SUCCESS" "Backward compatibility maintained for: ${project}"
-                else
-                    print_status "WARN" "Output differs for ${project} (this might be acceptable if improvements were made)"
-                    # Show diff for inspection but don't fail the test since output may have legitimately improved
-                    echo "Differences found:"
-                    diff -u "${expected_file}" "user-flows.dot" | head -20
-                fi
+    # Test angular-simple with simple-app expected output
+    local project="angular-simple"
+    local project_path="${MOCK_PROJECTS_DIR}/${project}"
+    local expected_file="${EXPECTED_OUTPUTS_DIR}/simple-app.dot"
+    
+    cd "${TEMP_TEST_DIR}"
+    rm -f *.dot *.png
+    
+    if node "${MAIN_JS_PATH}" "${project_path}" --no-image > /dev/null 2>&1; then
+        if [ -f "user-flows.dot" ] && [ -f "${expected_file}" ]; then
+            # Compare with expected output (allowing for minor formatting differences)
+            if diff -w "user-flows.dot" "${expected_file}" > /dev/null 2>&1; then
+                print_status "SUCCESS" "Backward compatibility maintained for: ${project}"
             else
-                print_status "FAIL" "Failed to generate or find expected output for: ${project}"
-                all_passed=false
+                print_status "WARN" "Output differs for ${project} (this might be acceptable if improvements were made)"
+                # Show diff for inspection but don't fail the test since output may have legitimately improved
+                echo "Differences found:"
+                diff -u "${expected_file}" "user-flows.dot" | head -20
             fi
         else
-            print_status "FAIL" "Analysis failed for: ${project}"
+            print_status "FAIL" "Failed to generate or find expected output for: ${project}"
             all_passed=false
         fi
-        
-        cd "${SCRIPT_DIR}"
-    done
+    else
+        print_status "FAIL" "Analysis failed for: ${project}"
+        all_passed=false
+    fi
+    
+    # Test angular-lazy-loading with lazy-load-app expected output
+    project="angular-lazy-loading"
+    project_path="${MOCK_PROJECTS_DIR}/${project}"
+    expected_file="${EXPECTED_OUTPUTS_DIR}/lazy-load-app.dot"
+    
+    cd "${TEMP_TEST_DIR}"
+    rm -f *.dot *.png
+    
+    if node "${MAIN_JS_PATH}" "${project_path}" --no-image > /dev/null 2>&1; then
+        if [ -f "user-flows.dot" ] && [ -f "${expected_file}" ]; then
+            # Compare with expected output (allowing for minor formatting differences)
+            if diff -w "user-flows.dot" "${expected_file}" > /dev/null 2>&1; then
+                print_status "SUCCESS" "Backward compatibility maintained for: ${project}"
+            else
+                print_status "WARN" "Output differs for ${project} (this might be acceptable if improvements were made)"
+                # Show diff for inspection but don't fail the test since output may have legitimately improved
+                echo "Differences found:"
+                diff -u "${expected_file}" "user-flows.dot" | head -20
+            fi
+        else
+            print_status "FAIL" "Failed to generate or find expected output for: ${project}"
+            all_passed=false
+        fi
+    else
+        print_status "FAIL" "Analysis failed for: ${project}"
+        all_passed=false
+    fi
+    
+    cd "${SCRIPT_DIR}"
     
     # Consider the test passed if analysis succeeded, even if output differs slightly
     record_test_result "PASS"
@@ -480,7 +507,7 @@ test_react_json_output() {
 test_react_themes() {
     print_status "TEST" "Testing React with different themes..."
     
-    local themes=("default" "dark" "colorful")
+    local themes=("light" "dark")
     local all_passed=true
     
     for theme in "${themes[@]}"; do
@@ -655,7 +682,7 @@ async function testAngularAPI() {
         analyzer.registerFrameworkAnalyzer(new AngularAnalyzer());
         analyzer.registerOutputGenerator(new DotGenerator());
         
-        const projectPath = './tests/mock-projects/simple-app';
+        const projectPath = './tests/mock-projects/angular-simple';
         
         const result = await analyzer.analyzeAndGenerate(
             {
