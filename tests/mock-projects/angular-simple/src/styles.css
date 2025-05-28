@@ -1,0 +1,100 @@
+/* Global Styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.header {
+  background-color: #1976d2;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.header h1 {
+  margin: 0;
+}
+
+.navigation {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-bottom: 1px solid #ddd;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.nav-links a {
+  color: #1976d2;
+  text-decoration: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  background-color: #1976d2;
+  color: white;
+}
+
+.content {
+  padding: 40px 20px;
+  min-height: 60vh;
+}
+
+.page {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.page h1 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.page p {
+  line-height: 1.6;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.button {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  margin: 5px;
+  text-decoration: none;
+  display: inline-block;
+  transition: background-color 0.3s;
+}
+
+.button:hover {
+  background-color: #1565c0;
+}
+
+.button-group {
+  margin-top: 30px;
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+} 

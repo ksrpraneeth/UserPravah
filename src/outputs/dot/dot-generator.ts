@@ -425,9 +425,16 @@ export class DotGenerator implements IOutputGenerator {
       });
     }
 
-    // Add navigation flows
+    // Add navigation flows - Enhanced for React support
     const componentToNodeId = new Map<string, string>();
+    const pathToNodeId = new Map<string, string>();
+    
+    // Build comprehensive mapping for both components and paths
     for (const [nodeId, node] of routeNodes.entries()) {
+      // Map by path
+      pathToNodeId.set(node.originalPath, nodeId);
+      
+      // Map by component name (for Angular-style)
       if (node.component) {
         componentToNodeId.set(node.component, nodeId);
         const baseName = node.component.replace(/Component$/, "");
@@ -435,18 +442,71 @@ export class DotGenerator implements IOutputGenerator {
           componentToNodeId.set(baseName, nodeId);
         }
       }
+      
+      // Map by display name (for React-style)
+      if (node.displayName && node.displayName !== "Root") {
+        componentToNodeId.set(node.displayName, nodeId);
+        // Also try without spaces
+        const noSpaces = node.displayName.replace(/\s+/g, "");
+        if (noSpaces !== node.displayName) {
+          componentToNodeId.set(noSpaces, nodeId);
+        }
+      }
     }
+
+    // Build reverse mapping: component name -> route path (for React)
+    // This maps React component names to the routes where they are used
+    for (const route of analysisResult.routes) {
+      if (route.component && route.fullPath) {
+        const nodeId = pathToNodeId.get(route.fullPath);
+        if (nodeId) {
+          componentToNodeId.set(route.component, nodeId);
+          // Also map without Component suffix
+          const baseName = route.component.replace(/Component$/, "");
+          if (baseName !== route.component) {
+            componentToNodeId.set(baseName, nodeId);
+          }
+        }
+      }
+    }
+
+    console.log(`📊 Component mappings: ${componentToNodeId.size}, Path mappings: ${pathToNodeId.size}`);
 
     for (const flow of analysisResult.flows) {
       if (!flow.from || !flow.to) continue;
 
+      // Find source node - try multiple strategies
       let sourceNodeId = componentToNodeId.get(flow.from);
       if (!sourceNodeId) {
-        const baseName = flow.from.replace(/Component$/, "");
-        sourceNodeId = componentToNodeId.get(baseName);
+        // Try with Component suffix
+        const withComponent = flow.from + "Component";
+        sourceNodeId = componentToNodeId.get(withComponent);
+      }
+      if (!sourceNodeId) {
+        // Try as path
+        sourceNodeId = pathToNodeId.get(flow.from);
+      }
+      if (!sourceNodeId) {
+        // Try to find by partial match
+        for (const [component, nodeId] of componentToNodeId.entries()) {
+          if (component.toLowerCase().includes(flow.from.toLowerCase()) || 
+              flow.from.toLowerCase().includes(component.toLowerCase())) {
+            sourceNodeId = nodeId;
+            break;
+          }
+        }
       }
 
+      // Find target node - normalize target path
       let targetPath = flow.to;
+      
+      // Handle template literals and dynamic paths
+      if (targetPath.includes("`") || targetPath.includes("${")) {
+        // Extract the base path from template literals
+        targetPath = targetPath.replace(/`([^`]*)`/, "$1");
+        targetPath = targetPath.replace(/\$\{[^}]+\}/g, ":param");
+      }
+      
       if (!targetPath.startsWith("/")) {
         if (sourceNodeId) {
           const sourceNode = routeNodes.get(sourceNodeId);
@@ -468,11 +528,22 @@ export class DotGenerator implements IOutputGenerator {
       }
 
       // Find target node by path
-      let targetNodeId: string | undefined;
-      for (const [nodeId, node] of routeNodes.entries()) {
-        if (node.originalPath === targetPath) {
-          targetNodeId = nodeId;
-          break;
+      let targetNodeId = pathToNodeId.get(targetPath);
+      
+      // If not found, try pattern matching for parameterized routes
+      if (!targetNodeId) {
+        for (const [nodeId, node] of routeNodes.entries()) {
+          if (node.originalPath === targetPath) {
+            targetNodeId = nodeId;
+            break;
+          }
+          // Try pattern matching for routes with parameters
+          const patternText = node.originalPath.replace(/:[^\\/]+/g, "[^/]+");
+          const regex = new RegExp(`^${patternText}$`);
+          if (regex.test(targetPath)) {
+            targetNodeId = nodeId;
+            break;
+          }
         }
       }
 
@@ -494,6 +565,8 @@ export class DotGenerator implements IOutputGenerator {
           type: flow.type,
           label: edgeLabel,
         });
+      } else {
+        console.log(`⚠️ Could not map flow: ${flow.from} -> ${flow.to} (source: ${!!sourceNodeId}, target: ${!!targetNodeId})`);
       }
     }
 

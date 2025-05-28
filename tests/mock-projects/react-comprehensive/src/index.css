@@ -1,0 +1,160 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+.navigation {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.nav-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.nav-menu {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.nav-item {
+  position: relative;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: #007bff;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  list-style: none;
+  margin: 0;
+  display: none;
+  min-width: 150px;
+}
+
+.nav-item:hover .submenu {
+  display: block;
+}
+
+.nav-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.nav-actions button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.nav-actions button:hover {
+  background-color: #218838;
+}
+
+.external-links {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.external-links a {
+  color: #6c757d;
+  text-decoration: none;
+}
+
+.home {
+  padding: 2rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.home section {
+  margin-bottom: 2rem;
+}
+
+.home h1 {
+  color: #343a40;
+  margin-bottom: 1rem;
+}
+
+.home h2 {
+  color: #495057;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #007bff;
+  padding-bottom: 0.5rem;
+}
+
+.home nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.home nav a {
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.2s;
+}
+
+.home nav a:hover {
+  background-color: #0056b3;
+}
+
+.home button {
+  background-color: #17a2b8;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  margin-bottom: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.home button:hover {
+  background-color: #138496;
+} 
